@@ -2,6 +2,7 @@ from PIL import Image
 import os
 
 def merge_images(path_image_mask, path_image, save_path):
+    print('to aqui')
     # Carregar as imagens
     png_image = Image.open(path_image_mask)  # Caminho da imagem PNG
     jpg_image = Image.open(path_image)  # Caminho da imagem JPG
@@ -32,22 +33,32 @@ def merge_images(path_image_mask, path_image, save_path):
     return full_save_path
 
 
-def find_commom(imgs,mask,new_path):
+def find_commom(imgs, mask, new_path):
+    # Obter apenas os nomes dos arquivos (sem extensão) das imagens .jpg
+    img_names = {os.path.splitext(os.path.basename(img))[0]: img for img in imgs if img.lower().endswith('.jpg')}
+    print(img_names)
 
-    img_names = [os.path.basename(img).lower() for img in imgs]
-
-   
     for file in mask:
-        file_name = os.path.basename(file).lower()
+        # Extrair nome do arquivo sem extensão e a pasta
+        file_name_no_ext = os.path.splitext(os.path.basename(file))[0]
         folder_name = os.path.basename(os.path.dirname(file))
+        print(f'MASK {file_name_no_ext}')
 
-        if file_name in img_names:
+        if file_name_no_ext in img_names:
+            # Obter o caminho da imagem correspondente com .jpg
+            path_file_img = img_names[file_name_no_ext]
+            print(path_file_img)
 
-            path_file_img = os.path.join(r"C:\Users\matheus.bury_vidyate\Downloads\IA EX",file_name)
-            
-            new_path_file = os.path.join(new_path,folder_name)
-            os.makedirs(new_path_file,exist_ok=True)
-            merge_images(file,path_file_img,new_path_file)
+            # Criar o novo caminho mantendo a estrutura
+            new_path_file = os.path.join(new_path, folder_name)
+            print(new_path_file)
+            os.makedirs(new_path_file, exist_ok=True)
+
+            # Chamar a função de merge com os arquivos nos caminhos corretos
+            merge_images(file, path_file_img, new_path_file)
+        else:
+            # Caso o arquivo não seja encontrado
+            pass
 
 
 def percorrer(path_image):
@@ -62,11 +73,19 @@ def percorrer(path_image):
 
 if __name__ == "__main__":
 
-    base_path_mask = r"C:\Users\matheus.bury_vidyate\Downloads\mv26_3D\descompactada"
-    path_image_dir = r"C:\Users\matheus.bury_vidyate\Downloads\IA EX"
-    save_base_path = r'G:\Drives compartilhados\OPERATION PHOTOS\Modec\MV26\2024\IA EX escolha'
+    base_path_mask = r"C:\Users\matheus.bury_vidyate\Downloads\mask teste de comparacao\dataset - 01072024"
+    path_image_dir = r"C:\Users\matheus.bury_vidyate\Downloads\drive-download-20241205T122850Z-001\img"
+    save_base_path = r'C:\Users\matheus.bury_vidyate\Downloads\img com ia'
 
     img_path = percorrer(path_image_dir)
     mask_path = percorrer(base_path_mask)
 
     find_commom(img_path,mask_path,save_base_path)
+
+    # path_image_mask = r"C:\Users\matheus.bury_vidyate\Downloads\mask CS\bai\IMG_20180109_213557_00_169.png"
+    # path_file_img = r"C:\Users\matheus.bury_vidyate\Downloads\original\IMG_20180109_213557_00_169.jpg"
+    # new_path_file = r'C:\Users\matheus.bury_vidyate\Downloads\merger'
+
+
+
+    # merge_images(path_image_mask,path_file_img,new_path_file)
