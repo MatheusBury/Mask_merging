@@ -1,7 +1,7 @@
-import os
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
+
 
 class ImageZoomWindow(tk.Toplevel):
     def __init__(self, master, image_path, model_name, bg_color, update_zoom_callback, sync_position_callback):
@@ -11,8 +11,8 @@ class ImageZoomWindow(tk.Toplevel):
         self.configure(bg=bg_color)
 
         # Criação do Frame para borda personalizada
-        self.frame = tk.Frame(self, bg='gray')  # Cor da borda (ajuste conforme necessário)
-        self.frame.pack(fill="both", expand=True, padx=10, pady=10)  # Borda interna
+        self.frame = tk.Frame(self, bg='gray')
+        self.frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Frame principal da janela com o conteúdo
         self.content_frame = tk.Frame(self.frame, bg=bg_color)
@@ -20,7 +20,7 @@ class ImageZoomWindow(tk.Toplevel):
 
         # Adiciona o título personalizado
         self.title_label = tk.Label(self.content_frame, text=model_name, font=("Helvetica", 16, "bold"), bg=bg_color, anchor="w")
-        self.title_label.pack(fill="x", padx=10, pady=5)  # Ajuste o padding conforme necessário
+        self.title_label.pack(fill="x", padx=10, pady=5)
 
         # Configura o canvas
         self.canvas = tk.Canvas(self.content_frame, bg=bg_color, highlightthickness=0)
@@ -116,26 +116,59 @@ class ImageZoomApp:
         self.apply_button = tk.Button(self.input_frame, text="Aplicar", command=self.update_image_paths)
         self.apply_button.pack(side="left")
 
-        self.modelos_mask = [
-            ('modec_mv30', 'lightblue'), 
-            ('exp_mv30_modec', 'lightgreen'), 
-            ('exp_mv30_baseline', 'lightpink')
+        self.models = [
+            ('bai_1495', 'lightblue'),
+            ('bai_1495_murphy', 'lightgreen'),
+            ('exp_murphy_bai14952', 'lightpink'),
+            ('exp_murphy_equinor_red', 'lightcyan'),
+            ('exp_murphy_equinor_red2', 'lightgray'),
+            ('exp_murphy_equinor22', 'lightyellow'),
+            ('exp_mv30_baseline', 'darkgray'),
+            ('exp_mv30_modec', 'darkgreen'),
+            ('modec_mv30', 'darkmagenta'),
+            ('unify', 'darkred'),
         ]
 
+        self.selected_models = []
+
+        self.checkbox_frame = tk.Frame(self.master)
+        self.checkbox_frame.pack(pady=10)
+
+        self.checkboxes = []
+        for model in self.models:
+            var = tk.BooleanVar()
+            checkbox = tk.Checkbutton(self.checkbox_frame, text=model[0], variable=var, command=self.limit_selection)
+            checkbox.pack(anchor="w")
+            self.checkboxes.append((checkbox, var))
+
         self.windows = []  # Para armazenar as janelas abertas
+
+    def limit_selection(self):
+        selected_count = sum(var.get() for _, var in self.checkboxes)
+        if selected_count > 3:
+            for checkbox, var in self.checkboxes:
+                if not var.get():
+                    checkbox.config(state="disabled")
+        else:
+            for checkbox, var in self.checkboxes:
+                checkbox.config(state="normal")
 
     def update_image_paths(self):
         input_image = self.image_entry.get()
         if not input_image:
             return  # Se não houver input, nada acontece
 
+        self.selected_models = [
+            model for (model, _), (_, var) in zip(self.models, self.checkboxes) if var.get()
+        ]
+
         # Fechar as janelas antigas
         self.close_windows()
 
         # Caminhos das imagens para cada modelo
         self.paths = [
-            fr"C:\Users\matheus.bury_vidyate\Downloads\img com ia\{model[0]}\{input_image}.jpg"
-            for model in self.modelos_mask
+            fr"C:\Users\matheus.bury_vidyate\Downloads\img com ia\{model}\{input_image}.jpg"
+            for model in self.selected_models
         ]
 
         # Cria as janelas de zoom
@@ -157,9 +190,9 @@ class ImageZoomApp:
         window_width = screen_width // 3
         window_height = screen_height
 
-        for i, (path, model) in enumerate(zip(self.paths, self.modelos_mask)):
-            model_name, bg_color = model
-            window = ImageZoomWindow(self.master, path, model_name, bg_color, self.update_zoom, self.sync_image_position)
+        for i, (path, model) in enumerate(zip(self.paths, self.selected_models)):
+            bg_color = next(color for m, color in self.models if m == model)
+            window = ImageZoomWindow(self.master, path, model, bg_color, self.update_zoom, self.sync_image_position)
             window.geometry(f"{window_width}x{window_height}+{i * window_width}+0")
             self.windows.append(window)
 
